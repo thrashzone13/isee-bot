@@ -1,0 +1,53 @@
+version: "3.5"
+
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    image: isee-bot
+    env_file: .env
+    networks:
+      - isee_bot
+
+  mongo:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    # ports:
+    #   - "27017:27017"
+    networks:
+      - isee_bot
+    volumes:
+      - type: volume
+        source: mongo_data
+        target: /data/db
+      - type: volume
+        source: mongo_config
+        target: /data/configdb
+
+  mongo_express:
+    image: mongo-express:latest
+    restart: always
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: admin
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_PORT: "27017"
+    ports:
+      - "0.0.0.0:8085:8081"
+    networks:
+      - isee_bot
+    depends_on:
+      - mongo
+
+networks:
+  isee_bot:
+    name: isee_bot
+
+volumes:
+  mongo_data:
+    name: isee_bot_mongo_data
+  mongo_config:
+    name: isee_bot_mongo_config
