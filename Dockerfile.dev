@@ -1,0 +1,7 @@
+# build stage
+FROM golang:1.18-alpine 
+RUN apk add --no-cache gcc libc-dev git
+WORKDIR /src 
+RUN go install github.com/cosmtrek/air@latest
+
+ENTRYPOINT ["air"]
