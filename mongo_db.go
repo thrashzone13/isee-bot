@@ -15,10 +15,10 @@ func ConnectMongoDB() *mongo.Database {
 	})
 
 	client, err := mongo.Connect(context.TODO(), clientOptions)
-	LogIfError(err)
+	CheckIfError(err)
 
 	err = client.Ping(context.TODO(), nil)
-	LogIfError(err)
+	CheckIfError(err)
 
 	return client.Database(os.Getenv("DB_NAME"))
 }

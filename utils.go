@@ -2,24 +2,32 @@ package main
 
 import (
 	"log"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-func LogIfError(err error, params ...string) {
+func CheckIfError(err error, params ...string) {
 	if err != nil {
 		if len(params) > 0 {
-			log.Fatalln(params[0])
+			log.Fatal(params[0])
 			return
 		}
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 }
 
-func UnMarshalDBResult(data interface{}, model interface{}) {
-	b, err := bson.Marshal(data)
-	LogIfError(err)
-
-	err = bson.Unmarshal(b, model)
-	LogIfError(err)
+func GetProperMessage(status int) string {
+	switch status {
+	case 0:
+		return "Enter salary"
+	case 1:
+		return "Do you own a house?"
+	case 2:
+		return "Enter house area"
+	case 3:
+		return "Enter number of family members"
+	case 4:
+		return ""
+	default:
+		log.Fatal("Invalid user status")
+	}
+	return ""
 }
