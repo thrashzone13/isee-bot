@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,47 +23,50 @@ func (u *User) GetStatus() int {
 	if u.HasHouse == nil {
 		return 1
 	}
-	if u.HouseArea == nil {
+	if *u.HasHouse && u.HouseArea == nil {
 		return 2
 	}
 	if u.FamilyMembers == nil {
 		return 3
 	}
+
 	return 4
 }
 
-func (u *User) SetSalary(val string) bool {
-	salary, err := strconv.Atoi(val)
+func (u *User) SetSalary(txt string) error {
+	val, err := strconv.Atoi(txt)
 	if err != nil {
-		return false
+		return errors.New("فرمت دریافتی ماهانه اشتباه است. دوباره وارد کنید")
 	}
-	u.Salary = &salary
-	return true
+
+	u.Salary = &val
+	return nil
 }
 
-func (u *User) SetHasHouse(val string) bool {
-	hasHouse, err := strconv.ParseBool(val)
-	if err != nil {
-		return false
-	}
-	u.HasHouse = &hasHouse
-	return true
+func (u *User) SetHasHouse(val bool) {
+	u.HasHouse = &val
 }
 
-func (u *User) SetHouseArea(val string) bool {
-	houseArea, err := strconv.Atoi(val)
+func (u *User) SetHouseArea(txt string) error {
+	val, err := strconv.Atoi(txt)
 	if err != nil {
-		return false
+		return errors.New("فرمت متراژ ملک اشتباه است. دوباره وارد کنید")
 	}
-	u.HouseArea = &houseArea
-	return true
+
+	u.HouseArea = &val
+	return nil
 }
 
-func (u *User) SetFamilyMembers(val string) bool {
-	familyMembers, err := strconv.Atoi(val)
+func (u *User) SetFamilyMembers(txt string) error {
+	val, err := strconv.Atoi(txt)
 	if err != nil {
-		return false
+		return errors.New("فرمت تعداد افراد تحت تکلف سرپرست اشتباه است. دوباره وارد کنید")
 	}
-	u.FamilyMembers = &familyMembers
-	return true
+
+	u.FamilyMembers = &val
+	return nil
+}
+
+func (u *User) CalculateISEE() int {
+	return 0
 }
