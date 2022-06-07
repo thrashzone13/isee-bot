@@ -33,21 +33,25 @@ func (r *UserRepo) Find(UserID int64) *User {
 	return &User
 }
 
-func (r *UserRepo) FindOrInsert(UserID int64) *User {
-	user := r.Find(UserID)
+func (r *UserRepo) FindOrInsert(UserID int64) (bool, *User) {
+	var (
+		user  = r.Find(UserID)
+		insrt = false
+	)
 
 	if user == nil {
 		res, err := r.coll.InsertOne(context.TODO(), User{
 			UserID: UserID,
 		})
 		CheckIfError(err)
+		insrt = true
 
 		if oid, ok := res.InsertedID.(primitive.ObjectID); ok {
 			user = &User{ID: &oid, UserID: UserID}
 		}
 	}
 
-	return user
+	return insrt, user
 }
 
 func (r *UserRepo) Update(user *User) {

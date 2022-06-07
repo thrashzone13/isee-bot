@@ -2,13 +2,20 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
+	"github.com/enescakir/emoji"
 	tele "gopkg.in/telebot.v3"
 )
 
 var (
+	calcMenu              = &tele.ReplyMarkup{ResizeKeyboard: true}
+	btnOfficialEuro   = calcMenu.Text("محاسبه با یورو دولتی")
+	btnUnOfficialEuro = calcMenu.Text("محاسبه با یورو آزاد")
+	btnReset          = calcMenu.Text("ورود مجدد اطلاعات")
+
 	selector = &tele.ReplyMarkup{}
 	btnYes   = selector.Data("بله", "true")
 	btnNo    = selector.Data("خیر", "false")
@@ -19,11 +26,23 @@ func main() {
 	db := ConnectMongoDB()
 	userRepo := NewUserRepo(db)
 
+	bot.Use(SanitizePersianDigits)
 	bot.Handle("/start", func(c tele.Context) error {
 		var (
-			sender = c.Sender()
-			usr    = userRepo.FindOrInsert(sender.ID)
+			sender     = c.Sender()
+			isNew, usr = userRepo.FindOrInsert(sender.ID)
 		)
+
+		if isNew {
+			c.Send(fmt.Sprintf(`
+			سلام %s! %s %s
+
+به ربات محاسبه عدد ایزه بورس استانی ایتالیا خوش اومدی. برای شروع لطفا اطلاعاتی که ازت خواسته میشه رو وارد کن.
+
+%sنکته خیلی مهم%s
+این ربات با استفاده از فرمول های موجود در اینترنت محاسبات رو انجام میده و عدد به دست آمده به هیچ عنوان قابل تضمین نیست !
+			`, c.Sender().FirstName, emoji.WavingHand, emoji.Parse(":flag-it:"), emoji.ExclamationMark, emoji.ExclamationMark))
+		}
 
 		replyProperMessage(c, usr)
 
@@ -32,8 +51,8 @@ func main() {
 
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		var (
-			usr = userRepo.FindOrInsert(c.Sender().ID)
-			txt = c.Text()
+			_, usr = userRepo.FindOrInsert(c.Sender().ID)
+			txt    = c.Text()
 		)
 
 		switch usr.GetStatus() {
@@ -52,7 +71,7 @@ func main() {
 				return c.Send(err.Error())
 			}
 		case 4:
-			return nil
+			return showCalculationKeyboard(c)
 		default:
 			return c.Send("Invalid user status")
 		}
@@ -64,7 +83,7 @@ func main() {
 	})
 
 	bot.Handle(&btnYes, func(c tele.Context) error {
-		usr := userRepo.FindOrInsert(c.Sender().ID)
+		_, usr := userRepo.FindOrInsert(c.Sender().ID)
 		usr.SetHasHouse(false)
 		userRepo.Update(usr)
 
@@ -72,11 +91,15 @@ func main() {
 	})
 
 	bot.Handle(&btnNo, func(c tele.Context) error {
-		usr := userRepo.FindOrInsert(c.Sender().ID)
+		_, usr := userRepo.FindOrInsert(c.Sender().ID)
 		usr.SetHasHouse(true)
 		userRepo.Update(usr)
 
 		return c.Edit("متراژ ملک مسکونی را وارد کنید")
+	})
+
+	bot.Handle(&btnOfficialEuro, func(c tele.Context) error {
+		return c.EditOrSend("Here is some help: ...")
 	})
 
 	bot.Start()
@@ -96,12 +119,20 @@ func replyProperMessage(c tele.Context, usr *User) error {
 	case 3:
 		c.Send("تعداد افراد تحت تکلف سرپرست را وارد کنید")
 	case 4:
-		c.Send("Woop!")
+		showCalculationKeyboard(c)
 	default:
 		return errors.New("invalid user status")
 	}
 
 	return nil
+}
+
+func showCalculationKeyboard(c tele.Context) error {
+	calcMenu.Reply(
+		calcMenu.Row(btnOfficialEuro, btnUnOfficialEuro),
+		calcMenu.Row(btnReset),
+	)
+	return c.Send("برای محاسبه عدد ایزه یکی از انواع نرخ ارز را انتخاب کنید", calcMenu)
 }
 
 func createBot() *tele.Bot {
