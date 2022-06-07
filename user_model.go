@@ -66,7 +66,3 @@ func (u *User) SetFamilyMembers(txt string) error {
 	u.FamilyMembers = &val
 	return nil
 }
-
-func (u *User) CalculateISEE() int {
-	return 0
-}

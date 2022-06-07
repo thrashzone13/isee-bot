@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	calcMenu              = &tele.ReplyMarkup{ResizeKeyboard: true}
+	calcMenu          = &tele.ReplyMarkup{ResizeKeyboard: true}
 	btnOfficialEuro   = calcMenu.Text("محاسبه با یورو دولتی")
 	btnUnOfficialEuro = calcMenu.Text("محاسبه با یورو آزاد")
 	btnReset          = calcMenu.Text("ورود مجدد اطلاعات")
@@ -40,6 +40,7 @@ func main() {
 به ربات محاسبه عدد ایزه بورس استانی ایتالیا خوش اومدی. برای شروع لطفا اطلاعاتی که ازت خواسته میشه رو وارد کن.
 
 %sنکته خیلی مهم%s
+
 این ربات با استفاده از فرمول های موجود در اینترنت محاسبات رو انجام میده و عدد به دست آمده به هیچ عنوان قابل تضمین نیست !
 			`, c.Sender().FirstName, emoji.WavingHand, emoji.Parse(":flag-it:"), emoji.ExclamationMark, emoji.ExclamationMark))
 		}
@@ -99,7 +100,15 @@ func main() {
 	})
 
 	bot.Handle(&btnOfficialEuro, func(c tele.Context) error {
-		return c.EditOrSend("Here is some help: ...")
+		usr := userRepo.Find(c.Sender().ID)
+		srv := ISEEService{usr}
+		return c.Send(fmt.Sprintf("%f", srv.Calc(5000)))
+	})
+
+	bot.Handle(&btnUnOfficialEuro, func(c tele.Context) error {
+		usr := userRepo.Find(c.Sender().ID)
+		srv := ISEEService{usr}
+		return c.Send(fmt.Sprintf("%f", srv.Calc(32000)))
 	})
 
 	bot.Start()
