@@ -27,13 +27,12 @@ func main() {
 	userRepo := NewUserRepo(db)
 
 	bot.Use(SanitizePersianDigits)
-	bot.Handle("/start", func(c tele.Context) error {
-		var (
-			sender     = c.Sender()
-			isNew, usr = userRepo.FindOrInsert(sender.ID)
-		)
+
+	bot.Handle(tele.OnText, func(c tele.Context) error {
+		isNew, usr := userRepo.FindOrInsert(c.Sender().ID)
 
 		if isNew {
+			calcMenu.RemoveKeyboard = true
 			c.Send(fmt.Sprintf(`
 			سلام %s! %s %s
 
@@ -42,43 +41,13 @@ func main() {
 %sنکته خیلی مهم%s
 
 این ربات با استفاده از فرمول های موجود در اینترنت محاسبات رو انجام میده و عدد به دست آمده به هیچ عنوان قابل تضمین نیست !
-			`, c.Sender().FirstName, emoji.WavingHand, emoji.Parse(":flag-it:"), emoji.ExclamationMark, emoji.ExclamationMark))
+			`, c.Sender().FirstName, emoji.WavingHand, emoji.Parse(":flag-it:"), emoji.ExclamationMark, emoji.ExclamationMark),calcMenu)
+		} else {
+			recieveInfo(c, usr)
+			userRepo.Update(usr)
 		}
 
-		replyProperMessage(c, usr)
-
-		return nil
-	})
-
-	bot.Handle(tele.OnText, func(c tele.Context) error {
-		var (
-			_, usr = userRepo.FindOrInsert(c.Sender().ID)
-			txt    = c.Text()
-		)
-
-		switch usr.GetStatus() {
-		case 0:
-			if err := usr.SetSalary(txt); err != nil {
-				return c.Send(err.Error())
-			}
-		case 1:
-			return nil
-		case 2:
-			if err := usr.SetHouseArea(txt); err != nil {
-				return c.Send(err.Error())
-			}
-		case 3:
-			if err := usr.SetFamilyMembers(txt); err != nil {
-				return c.Send(err.Error())
-			}
-		case 4:
-			return showCalculationKeyboard(c)
-		default:
-			return c.Send("Invalid user status")
-		}
-
-		userRepo.Update(usr)
-		replyProperMessage(c, usr)
+		askInfo(c, usr)
 
 		return nil
 	})
@@ -88,7 +57,7 @@ func main() {
 		usr.SetHasHouse(false)
 		userRepo.Update(usr)
 
-		return c.Edit("تعداد افراد تحت تکلف سرپرست را وارد کنید")
+		return askInfo(c,usr)
 	})
 
 	bot.Handle(&btnNo, func(c tele.Context) error {
@@ -96,7 +65,7 @@ func main() {
 		usr.SetHasHouse(true)
 		userRepo.Update(usr)
 
-		return c.Edit("متراژ ملک مسکونی را وارد کنید")
+		return askInfo(c,usr)
 	})
 
 	bot.Handle(&btnOfficialEuro, func(c tele.Context) error {
@@ -114,7 +83,34 @@ func main() {
 	bot.Start()
 }
 
-func replyProperMessage(c tele.Context, usr *User) error {
+func recieveInfo(c tele.Context, usr *User) error {
+	txt := c.Text()
+
+	switch usr.GetStatus() {
+	case 0:
+		if err := usr.SetSalary(txt); err != nil {
+			return c.Send(err.Error())
+		}
+	case 1:
+		return nil
+	case 2:
+		if err := usr.SetHouseArea(txt); err != nil {
+			return c.Send(err.Error())
+		}
+	case 3:
+		if err := usr.SetFamilyMembers(txt); err != nil {
+			return c.Send(err.Error())
+		}
+	case 4:
+		return showCalculationKeyboard(c)
+	default:
+		return c.Send("Invalid user status")
+	}
+
+	return nil
+}
+
+func askInfo(c tele.Context, usr *User) error {
 	switch usr.GetStatus() {
 	case 0:
 		c.Send("مقدار دریافتی ماهانه سرپرست را به تومان وارد کنید")
@@ -124,9 +120,12 @@ func replyProperMessage(c tele.Context, usr *User) error {
 		)
 		c.Send("آیا ملک مسکونی استیجاری است؟", selector)
 	case 2:
-		c.Send("متراژ ملک مسکونی را وارد کنید")
+		c.EditOrSend("متراژ ملک مسکونی را وارد کنید")
 	case 3:
-		c.Send("تعداد افراد تحت تکلف سرپرست را وارد کنید")
+		c.EditOrSend(`
+تعداد افراد تحت تکلف سرپرست را وارد کنید
+در صورتی که خودتان سرپرست هستید عدد ۱ را وارد کنید
+		`)
 	case 4:
 		showCalculationKeyboard(c)
 	default:
