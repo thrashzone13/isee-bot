@@ -26,7 +26,7 @@ func main() {
 	db := ConnectMongoDB()
 	userRepo := NewUserRepo(db)
 
-	bot.Use(SanitizePersianDigits)
+	bot.Use(SanitizePersianDigits, logUserMessage)
 
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		isNew, usr := userRepo.FindOrInsert(c.Sender().ID)
@@ -76,7 +76,7 @@ func main() {
 		}
 
 		srv := ISEEService{usr}
-		return c.Send(fmt.Sprintf("%f", srv.Calc(5000)))
+		return c.Send(ThousandSeparator(srv.Calc(5000)))
 	})
 
 	bot.Handle(&btnUnOfficialEuro, func(c tele.Context) error {
@@ -87,7 +87,7 @@ func main() {
 		}
 
 		srv := ISEEService{usr}
-		return c.Send(fmt.Sprintf("%f", srv.Calc(32000)))
+		return c.Send(ThousandSeparator(srv.Calc(35000)))
 	})
 
 	bot.Handle(&btnReset, func(c tele.Context) error {
