@@ -41,7 +41,7 @@ func main() {
 %sنکته خیلی مهم%s
 
 این ربات با استفاده از فرمول های موجود در اینترنت محاسبات رو انجام میده و عدد به دست آمده به هیچ عنوان قابل تضمین نیست !
-			`, c.Sender().FirstName, emoji.WavingHand, emoji.Parse(":flag-it:"), emoji.ExclamationMark, emoji.ExclamationMark),calcMenu)
+			`, c.Sender().FirstName, emoji.WavingHand, emoji.Parse(":flag-it:"), emoji.ExclamationMark, emoji.ExclamationMark), calcMenu)
 		} else {
 			recieveInfo(c, usr)
 			userRepo.Update(usr)
@@ -57,7 +57,7 @@ func main() {
 		usr.SetHasHouse(false)
 		userRepo.Update(usr)
 
-		return askInfo(c,usr)
+		return askInfo(c, usr)
 	})
 
 	bot.Handle(&btnNo, func(c tele.Context) error {
@@ -65,19 +65,44 @@ func main() {
 		usr.SetHasHouse(true)
 		userRepo.Update(usr)
 
-		return askInfo(c,usr)
+		return askInfo(c, usr)
 	})
 
 	bot.Handle(&btnOfficialEuro, func(c tele.Context) error {
 		usr := userRepo.Find(c.Sender().ID)
+
+		if usr.GetStatus() != 4 {
+			return askInfo(c, usr)
+		}
+
 		srv := ISEEService{usr}
 		return c.Send(fmt.Sprintf("%f", srv.Calc(5000)))
 	})
 
 	bot.Handle(&btnUnOfficialEuro, func(c tele.Context) error {
 		usr := userRepo.Find(c.Sender().ID)
+
+		if usr.GetStatus() != 4 {
+			return askInfo(c, usr)
+		}
+
 		srv := ISEEService{usr}
 		return c.Send(fmt.Sprintf("%f", srv.Calc(32000)))
+	})
+
+	bot.Handle(&btnReset, func(c tele.Context) error {
+		usr := userRepo.Find(c.Sender().ID)
+
+		usr.Salary = nil
+		usr.HasHouse = nil
+		usr.HouseArea = nil
+		usr.FamilyMembers = nil
+		userRepo.Update(usr)
+
+		calcMenu.RemoveKeyboard = true
+		c.Send("اطلاعات خود را مجدد وارد کنید", calcMenu)
+
+		return askInfo(c, usr)
 	})
 
 	bot.Start()
