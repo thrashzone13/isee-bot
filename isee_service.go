@@ -4,10 +4,10 @@ type ISEEService struct {
 	User *User
 }
 
-func (s *ISEEService) Calc(euroPrice int) float64 {
+func (s *ISEEService) Calc(euroPrice int) int {
 	totalSalary := (*s.User.Salary * 12) / euroPrice
 	houseThreshold := (s.calcHouseWorthiness() * 20) / 100
-	return float64(totalSalary+houseThreshold) / s.calcFamilyMembersThreshold()
+	return int(float32(totalSalary+houseThreshold) / s.calcFamilyMembersThreshold())
 }
 
 func (s *ISEEService) calcHouseWorthiness() int {
@@ -17,7 +17,7 @@ func (s *ISEEService) calcHouseWorthiness() int {
 	return *s.User.HouseArea * int(500)
 }
 
-func (s *ISEEService) calcFamilyMembersThreshold() float64 {
+func (s *ISEEService) calcFamilyMembersThreshold() float32 {
 	switch *s.User.FamilyMembers {
 	case 1:
 		return 1.0
@@ -31,6 +31,6 @@ func (s *ISEEService) calcFamilyMembersThreshold() float64 {
 		return 2.85
 	default:
 		diff := *s.User.FamilyMembers - 5
-		return 2.85 + (float64(diff) * 0.35)
+		return 2.85 + (float32(diff) * 0.35)
 	}
 }

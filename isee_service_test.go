@@ -10,27 +10,35 @@ import (
 
 func TestISEECalc(t *testing.T) {
 	tests := []struct {
-		salary        int
-		hasHouse      bool
-		houseArea     int
-		familyMembers int
-		euroPrice     int
-		expected      float64
+		Salary        int
+		HasHouse      bool
+		HouseArea     int
+		FamilyMembers int
+		EuroPrice     int
+		Expected      int
 	}{
 		{
+			10000000,
+			false,
 			100,
+			4,
+			5000,
+			9756,
+		},
+		{
+			10000000,
 			true,
-			100,
-			3,
-			32000,
-			0.0,
+			70,
+			4,
+			35000,
+			4239,
 		},
 	}
 
 	for i, test := range tests {
-		usr := &User{&primitive.NilObjectID, 1, &test.salary, &test.hasHouse, &test.houseArea, &test.familyMembers}
+		usr := &User{&primitive.NilObjectID, 1, &test.Salary, &test.HasHouse, &test.HouseArea, &test.FamilyMembers}
 		srv := ISEEService{usr}
-		Assert(t, test.expected, srv.Calc(test.euroPrice), "Test case %d is not successful\n", i)
+		Assert(t, test.Expected, srv.Calc(test.EuroPrice), "Test case %d is not successful\n", i)
 	}
 }
 
