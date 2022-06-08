@@ -5,7 +5,7 @@ type ISEEService struct {
 }
 
 func (s *ISEEService) Calc(euroPrice int) float64 {
-	totalSalary := *s.User.Salary * 12 * euroPrice
+	totalSalary := (*s.User.Salary * 12) / euroPrice
 	houseThreshold := (s.calcHouseWorthiness() * 20) / 100
 	return float64(totalSalary+houseThreshold) / s.calcFamilyMembersThreshold()
 }
